@@ -7,7 +7,6 @@ RIGHT MOUSE - create repulsive particles
 
 import random
 import pygame
-import math
 
 
 pygame.init()
@@ -25,10 +24,8 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREY = (200, 200, 200)
 YELLOW = (255, 255, 0)
-colors = [GREEN, RED, BLUE, ROZA, BLACK, WHITE, GREY, YELLOW]
 
-
-ball_size = 10
+ball_size = 3
 ball_mass = 100
 # If Random_color is False
 ball_color1 = RED
@@ -39,9 +36,13 @@ decrease_rate = 0.1   # If Decrease is True
 
 Physics = True    # Gravity
 Collision = True
-Random_color = False
+Random_color = True
 Loss_of_speed = True
 Decrease = False
+
+
+def random_color():
+    return (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
 
 class Ball:
@@ -55,6 +56,7 @@ class Ball:
         self.vy = speed_y
         self.balls1 = []    # [[loc], [velocity], timer, [acceleration], group]
         self.distance = 0
+        self.G = 6.6743 * 10 ** -11
         
     def create_balls1(self, x, y, group):
         self.balls1.append([[x, y], [random.randint(self.vx[0], self.vx[1]), random.randint(self.vy[0], self.vy[1])], self.size, [0, 0], group])
@@ -119,18 +121,21 @@ class Ball:
         for particle in self.balls1:
             for part in self.balls1:
                 # Euclidean distance
-                distance = math.sqrt((particle[0][0] - part[0][0]) ** 2 + (particle[0][1] - part[0][1]) ** 2)
-                if distance == 0:
-                    continue
-                else:
-                    self.distance = distance
-                # calculate acceleration for 1st ball
-                particle[3][0] = self.mass * (part[0][0] - particle[0][0]) / self.distance ** 2
-                particle[3][1] = self.mass * (part[0][1] - particle[0][1]) / self.distance ** 2
+                if abs(particle[0][0] - part[0][0]) > self.size and abs(particle[0][1] - part[0][1]) > self.size:
+                    distance = (particle[0][0] - part[0][0]) ** 2 + (particle[0][1] - part[0][1]) ** 2
+                    if distance == 0:
+                        continue
+                    else:
+                        self.distance = distance
+                    # calculate acceleration for 1st ball
+                    ax = self.mass * (part[0][0] - particle[0][0]) / self.distance
+                    ay = self.mass * (part[0][1] - particle[0][1]) / self.distance
+                    particle[3][0] = ax
+                    particle[3][1] = ay
 
-                # calculate acceleration for 2nd ball
-                part[3][0] = self.mass * (particle[0][0] - part[0][0]) / self.distance ** 2
-                part[3][1] = self.mass * (particle[0][1] - part[0][1]) / self.distance ** 2
+                    # calculate acceleration for 2nd ball
+                    part[3][0] = -ax
+                    part[3][1] = -ay
 
     def check_walls(self):
         size = self.surface.get_size()
@@ -162,7 +167,7 @@ class Ball:
                     ball[1][1] *= -1
 
 
-ball = Ball(surface=screen, mass=ball_mass, color1=random.choice(colors) if Random_color else ball_color1, color2=random.choice(colors) if Random_color else ball_color2, size=ball_size, speed_x=ball_speed_x, speed_y=ball_speed_y)
+ball = Ball(surface=screen, mass=ball_mass, color1=random_color() if Random_color else ball_color1, color2=random_color() if Random_color else ball_color2, size=ball_size, speed_x=ball_speed_x, speed_y=ball_speed_y)
 
 
 def main():
